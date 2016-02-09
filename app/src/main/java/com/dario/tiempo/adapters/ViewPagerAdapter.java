@@ -5,9 +5,9 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.util.Log;
 
-import com.dario.tiempo.NextDaysForecast;
+import com.dario.tiempo.models.NextDaysForecast;
 import com.dario.tiempo.R;
-import com.dario.tiempo.TodayForecast;
+import com.dario.tiempo.models.TodayForecast;
 import com.dario.tiempo.fragments.TodayTab;
 import com.dario.tiempo.fragments.NextDaysTab;
 

@@ -1,7 +1,7 @@
 # Android studio related
 *.iml
 /.idea/workspace.xml
-/.idea/libraries
+/.idea/libraries/
 .DS_Store
 
 # Android Studio Navigation editor temp files
@@ -26,7 +26,7 @@ gen/
 
 # Gradle files
 .gradle/
-/build
+build/
 
 # Local configuration file (sdk path, etc)
 local.properties

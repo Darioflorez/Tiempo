@@ -1,4 +1,4 @@
-package com.dario.tiempo;
+package com.dario.tiempo.models;
 
 import java.util.Date;
 

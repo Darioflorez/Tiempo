@@ -1,4 +1,4 @@
-package com.dario.tiempo;
+package com.dario.tiempo.models;
 
 /**
  * Created by dario on 2016-01-08.

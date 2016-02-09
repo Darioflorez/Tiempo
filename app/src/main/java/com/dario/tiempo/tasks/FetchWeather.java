@@ -4,11 +4,11 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import com.dario.tiempo.Forecast;
-import com.dario.tiempo.NextDaysForecast;
-import com.dario.tiempo.MainActivity;
+import com.dario.tiempo.models.Forecast;
+import com.dario.tiempo.models.NextDaysForecast;
+import com.dario.tiempo.activity.MainActivity;
 import com.dario.tiempo.R;
-import com.dario.tiempo.TodayForecast;
+import com.dario.tiempo.models.TodayForecast;
 
 import org.json.JSONArray;
 import org.json.JSONException;

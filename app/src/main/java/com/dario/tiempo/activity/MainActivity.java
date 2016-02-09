@@ -1,4 +1,4 @@
-package com.dario.tiempo;
+package com.dario.tiempo.activity;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -21,9 +21,10 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.SearchEvent;
 import android.widget.Toast;
 
+import com.dario.tiempo.Constants;
+import com.dario.tiempo.R;
 import com.dario.tiempo.adapters.ViewPagerAdapter;
 import com.dario.tiempo.services.FetchAddressIntentService;
 import com.dario.tiempo.tabs.SlidingTabLayout;
@@ -80,7 +81,7 @@ public class MainActivity extends AppCompatActivity
         // Assiging the Sliding Tab Layout View
         mTabs = (SlidingTabLayout) findViewById(R.id.slidingTab);
         mTabs.setDistributeEvenly(true); // To make the Tabs Fixed set this true, This makes the tabs Space Evenly in Available width
-        mTabs.setSelectedIndicatorColors(R.color.colorAccent);
+        mTabs.setSelectedIndicatorColors(R.color.accent);
 
         // Setting the ViewPager For the SlidingTabsLayout
         mTabs.setViewPager(mPager);
@@ -120,7 +121,6 @@ public class MainActivity extends AppCompatActivity
 
         //Populate the UI
     }
-
     //Handle Location/////////
     @Override
     public void onConnected(Bundle bundle) {
@@ -151,7 +151,6 @@ public class MainActivity extends AppCompatActivity
             mGoogleApiClient.disconnect();
         }
     }
-
     //Handle toolbar
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -166,54 +165,30 @@ public class MainActivity extends AppCompatActivity
         SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
 
         ComponentName componentName = new ComponentName(this, SearchableActivity.class);
-
-        /*searchView.setOnQueryTextListener(
-                new SearchView.OnQueryTextListener() {
-                    @Override
-                    public boolean onQueryTextSubmit(String query) {
-                        //Text has change apply filtering
-                        showToast("Query submitted ;)");
-                        return true;
-                    }
-
-                    @Override
-                    public boolean onQueryTextChange(String newText) {
-                        //Query has been submitted
-                        showToast(newText);
-                        return true;
-                    }
-                }
-        );*/
-
         searchView.setSearchableInfo(
                 searchManager.getSearchableInfo(componentName));
 
         return true;
     }
-
     @Override
     public boolean onSearchRequested() {
         Log.d(TAG, "onSearchRequested!");
         setContentView(R.layout.search);
         return super.onSearchRequested();
     }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            showToast("Settings Selected!");
-            return true;
+        switch (item.getItemId()){
+            case R.id.action_settings:
+                startActivity(new Intent(this, SettingsActivity.class));
+                return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
-
     //Location ///////////////////////////////////////////////////////////////
     private void fetchLocation() {
         //Get location
@@ -316,14 +291,15 @@ public class MainActivity extends AppCompatActivity
                 Toast.LENGTH_LONG).show();
     }
 
+    //TODO:
+    //Pass CurrentCity as parameter
     private void requestWeatherInfo(){
         FetchWeather fetchWeather = new FetchWeather(this);
         fetchWeather.execute(mCurrentCity, FetchWeather.TODAY);
     }
-
+    // Callback method used to update the UI interface after the data information have been fetched
     public void onWeatherFetch(HashMap<Integer, Object> weatherData){
         mWeatherData = weatherData;
         mAdapter.updateFragments(mWeatherData);
     }
-
 }

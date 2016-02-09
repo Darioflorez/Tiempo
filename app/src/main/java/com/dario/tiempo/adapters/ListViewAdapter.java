@@ -7,7 +7,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.dario.tiempo.NextDaysForecast;
+import com.dario.tiempo.models.NextDaysForecast;
 import com.dario.tiempo.R;
 import com.dario.tiempo.helper.formater;
 

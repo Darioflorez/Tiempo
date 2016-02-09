@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">El Tiempo</string>
+    <string name="settings_activity">Settings</string>
     <string name="action_settings">Settings</string>
     <string name="search_title">Search</string>
     <string name="search_hint">Search location</string>
@@ -13,4 +14,48 @@
     <string name="next_days">nextDays</string>
     <string name="tab_today">Today</string>
     <string name="tab_next_days">Next Days</string>
+    <string name="title_activity_settings">Settings</string>
+
+    <!-- Strings related to Settings -->
+    <!--Key name for storing location in SharedPreferences-->
+    <string name="pref_location_key">location</string>
+    <string name="pref_location_title">Location</string>
+    <string name="pref_location_default">Stockholm</string>
+
+    <string name="pref_temp_units_title">Unit</string>
+    <string name="pref_temp_units_key">units</string>
+    <string-array name="pref_temperature_unit_titles">
+        <item>Celsius</item>
+        <item>Fahrenheit</item>
+    </string-array>
+
+    <string-array name="pref_temperature_unit_values">
+        <item>metric</item>
+        <item>imperial</item>
+    </string-array>
+
+
+    <!-- Example General settings -->
+    <string name="pref_header_general">General</string>
+
+    <string name="pref_title_social_recommendations">Enable social recommendations</string>
+    <string name="pref_description_social_recommendations">Recommendations for people to contact
+        based on your message history
+    </string>
+
+    <string name="pref_title_display_name">Display name</string>
+    <string name="pref_default_display_name">John Smith</string>
+
+    <string name="pref_title_add_friends_to_messages">Add friends to messages</string>
+    <string-array name="pref_example_list_titles">
+        <item>Always</item>
+        <item>When possible</item>
+        <item>Never</item>
+    </string-array>
+    <string-array name="pref_example_list_values">
+        <item>1</item>
+        <item>0</item>
+        <item>-1</item>
+    </string-array>
+
 </resources>

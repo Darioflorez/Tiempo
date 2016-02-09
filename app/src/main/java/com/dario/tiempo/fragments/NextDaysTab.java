@@ -11,15 +11,13 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.dario.tiempo.NextDaysForecast;
+import com.dario.tiempo.models.NextDaysForecast;
 import com.dario.tiempo.R;
 import com.dario.tiempo.adapters.ListViewAdapter;
 import com.dario.tiempo.helper.formater;
 
-import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Created by dario on 2015-12-22.
