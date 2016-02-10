@@ -6,12 +6,14 @@ import android.app.SearchManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
+import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
@@ -54,7 +56,7 @@ public class MainActivity extends AppCompatActivity
     private Location mLastLocation;
     private AddressResultReceiver mResultReceiver;
 
-    private String mCurrentCity;
+    //private String mCurrentCity;
 
     private HashMap<Integer, Object> mWeatherData;
 
@@ -111,13 +113,13 @@ public class MainActivity extends AppCompatActivity
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         //Save the data you want to preserve when the screen is rotated
-        outState.putString(CITY, mCurrentCity);
+        //outState.putString(CITY, mCurrentCity);
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        mCurrentCity = savedInstanceState.getString(CITY);
+        //mCurrentCity = savedInstanceState.getString(CITY);
 
         //Populate the UI
     }
@@ -221,6 +223,9 @@ public class MainActivity extends AppCompatActivity
             }else{
                 showToast(getString(R.string.no_geocoder_available));
             }
+        } else {
+            Log.d(TAG, "LOCATION NOT FETCHED!");
+            requestWeatherInfo(getString(R.string.no_location_found));
         }
     }
 
@@ -256,20 +261,17 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected void onReceiveResult(int resultCode, Bundle resultData) {
 
-            // Display the address string
-            // or an error message sent from the intent service.
-            mCurrentCity = resultData.getString(Constants.RESULT_DATA_KEY);
-
             // Show a toast message if an address was found.
             if (resultCode == Constants.SUCCESS_RESULT) {
-                Log.d(TAG, "RESULT: " + mCurrentCity);
-                showToast(getString(R.string.address_found) + " : " + mCurrentCity);
-
-                requestWeatherInfo();
+                String location = resultData.getString(Constants.RESULT_DATA_KEY);
+                Log.d(TAG, "RESULT: " + location);
+                requestWeatherInfo(location);
                 //disconnectGoogleApiClient();
-
             } else {
-                showToast(mCurrentCity);
+                //TODO:
+                // default have to be in a string resource
+                Log.d(TAG, "RESULT: " + "ADDRESS NO FOUND");
+                requestWeatherInfo(getString(R.string.no_location_found));
             }
 
         }
@@ -293,9 +295,23 @@ public class MainActivity extends AppCompatActivity
 
     //TODO:
     //Pass CurrentCity as parameter
-    private void requestWeatherInfo(){
+    //If no position found use default position
+    private void requestWeatherInfo(String location){
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String DefaultUnits = prefs.getString(
+                getString(R.string.pref_temp_units_key),
+                getString(R.string.pref_temp_units_default));
+        if(location.equals(getString(R.string.no_location_found))){
+            location = prefs.getString(
+                    getString(R.string.pref_location_key),
+                    getString(R.string.pref_location_default));
+
+            Log.d(TAG, "LOCATION:: " + getString(R.string.pref_location_key));
+        }
+
         FetchWeather fetchWeather = new FetchWeather(this);
-        fetchWeather.execute(mCurrentCity, FetchWeather.TODAY);
+        fetchWeather.execute(location, DefaultUnits);
     }
     // Callback method used to update the UI interface after the data information have been fetched
     public void onWeatherFetch(HashMap<Integer, Object> weatherData){

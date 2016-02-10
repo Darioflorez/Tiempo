@@ -44,6 +44,7 @@ public class TodayTab extends Fragment {
         View view = inflater.inflate(R.layout.tab_today, container, false);
         //Get the up components
         temp = (TextView) view.findViewById(R.id.temp);
+
         max = (TextView) view.findViewById(R.id.row_max_value);
         min = (TextView) view.findViewById(R.id.row_min_value);
         wind = (TextView) view.findViewById(R.id.row_wind_value);
@@ -59,9 +60,10 @@ public class TodayTab extends Fragment {
 
     public void updateUI(TodayForecast today){
         //Log.d(TAG, "TODAY max temp : " + today.getMax());
-        temp.setText(formater.formatTemperature(today.getTemp()));
-        max.setText(formater.formatTemperature(today.getMax()));
-        min.setText(formater.formatTemperature(today.getMin()));
+        temp.setText(formater.formatTemperature(today.getTemp(), today.getUnits()));
+
+        max.setText(formater.formatTemperature(today.getMax(), today.getUnits()));
+        min.setText(formater.formatTemperature(today.getMin(), today.getUnits()));
         wind.setText(formater.formatWind(today.getWind()));
         pressure.setText(formater.formatPressure(today.getPressure()));
         humidity.setText(formater.formatHumidity(today.getHumidity()));

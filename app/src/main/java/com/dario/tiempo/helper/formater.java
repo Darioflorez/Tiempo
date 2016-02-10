@@ -1,5 +1,7 @@
 package com.dario.tiempo.helper;
 
+import com.dario.tiempo.R;
+
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -9,8 +11,11 @@ import java.util.Locale;
  */
 public class formater {
 
-    public static String formatTemperature(Double temp){
-        return String.valueOf(temp) + " °C";
+    public static String formatTemperature(Double temp, String unit){
+        if(unit.equals("metric"))
+            return String.valueOf(temp) + " °C";
+
+        return String.valueOf(temp) + " °F";
     }
 
     public static String formatWind(Double windSpeed){

@@ -58,8 +58,8 @@ public class ListViewAdapter extends ArrayAdapter<NextDaysForecast> {
         holder.wind.setText(formater.formatWind(dayForecast.getWind()));
         holder.pressure.setText(formater.formatPressure(dayForecast.getPressure()));
         holder.description.setText(dayForecast.getDescription());
-        holder.max.setText(formater.formatTemperature(dayForecast.getMax()));
-        holder.min.setText(formater.formatTemperature(dayForecast.getMin()));
+        holder.max.setText(formater.formatTemperature(dayForecast.getMax(),dayForecast.getUnits()));
+        holder.min.setText(formater.formatTemperature(dayForecast.getMin(),dayForecast.getUnits()));
         return rowView;
     }
 

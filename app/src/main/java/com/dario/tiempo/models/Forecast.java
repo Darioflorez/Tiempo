@@ -14,6 +14,7 @@ public class Forecast {
     private String description;
     private String icon;
     private String location;
+    private String units;
 
     public Forecast() {
     }
@@ -101,5 +102,13 @@ public class Forecast {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public String getUnits() {
+        return units;
+    }
+
+    public void setUnits(String units) {
+        this.units = units;
     }
 }

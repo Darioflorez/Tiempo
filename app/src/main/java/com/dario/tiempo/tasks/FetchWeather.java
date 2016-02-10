@@ -1,7 +1,9 @@
 package com.dario.tiempo.tasks;
 
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.dario.tiempo.models.Forecast;
@@ -42,6 +44,8 @@ public class FetchWeather extends AsyncTask< String, Void, HashMap<Integer, Obje
     public static final String NEXTDAYS = "nextDays";
 
     private MainActivity mActivity;
+    private String mDefaultUnits;
+    private String mLocation;
 
     public FetchWeather (MainActivity activity){
         mActivity = activity;
@@ -54,10 +58,12 @@ public class FetchWeather extends AsyncTask< String, Void, HashMap<Integer, Obje
             return null;
         }
 
-        String location = params[0];
+        String mLocation = params[0];
+        mDefaultUnits= params[1];
+        Log.d(TAG, "UNITS:: " + mDefaultUnits);
         //
-        String urlStrNextDays = buildNextDaysForecastURL(location);
-        String urlStrToday = buildTodayForecastURL(location);
+        String urlStrNextDays = buildNextDaysForecastURL(mLocation, mDefaultUnits);
+        String urlStrToday = buildTodayForecastURL(mLocation, mDefaultUnits);
 
         HashMap<Integer, Object> result = new HashMap<>();
         try {
@@ -151,7 +157,7 @@ public class FetchWeather extends AsyncTask< String, Void, HashMap<Integer, Obje
         return forecastJson;
     }
 
-    private String buildTodayForecastURL(String location){
+    private String buildTodayForecastURL(String location, String units){
         Uri.Builder builder = new Uri.Builder();
         String url = builder.scheme("http")
                 .authority("api.openweathermap.org")
@@ -159,14 +165,14 @@ public class FetchWeather extends AsyncTask< String, Void, HashMap<Integer, Obje
                 .appendPath("2.5")
                 .appendPath("find")
                 .appendQueryParameter("q", location)
-                .appendQueryParameter("units", "metric")
+                .appendQueryParameter("units", units)
                 .appendQueryParameter("appid", KEY).build().toString();
 
         Log.i(TAG, url);
         return url;
     }
 
-    private String buildNextDaysForecastURL(String location){
+    private String buildNextDaysForecastURL(String location, String units){
         Uri.Builder builder = new Uri.Builder();
         String url = builder.scheme("http")
                 .authority("api.openweathermap.org")
@@ -176,7 +182,7 @@ public class FetchWeather extends AsyncTask< String, Void, HashMap<Integer, Obje
                 .appendPath("daily")
                 .appendQueryParameter("cnt", "7")
                 .appendQueryParameter("q", location)
-                .appendQueryParameter("units", "metric")
+                .appendQueryParameter("units", units)
                 .appendQueryParameter("appid", KEY).build().toString();
 
         Log.i(TAG, url);
@@ -217,9 +223,11 @@ public class FetchWeather extends AsyncTask< String, Void, HashMap<Integer, Obje
         String description = weather.getString("description");
         String icon = weather.getString("icon");
 
-
-        return new TodayForecast(min, max, pressure, windSpeed, humidity,
+        TodayForecast todayForecast = new TodayForecast(min, max, pressure, windSpeed, humidity,
                 clouds, description, icon, location, temp, readAt);
+        todayForecast.setUnits(mDefaultUnits);
+
+        return todayForecast;
     }
 
     private List<Forecast> JsonToForecastNextDays(String JsonStr) throws JSONException {
@@ -260,6 +268,7 @@ public class FetchWeather extends AsyncTask< String, Void, HashMap<Integer, Obje
 
             Forecast  forecast = new NextDaysForecast(min, max, pressure, wind, humidity, clouds,
                     description, icon, location, day);
+            forecast.setUnits(mDefaultUnits);
 
             forecastList.add(forecast);
         }
