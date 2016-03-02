@@ -97,6 +97,7 @@ public class MainActivity extends AppCompatActivity
                     .build();
         }
     }
+
     //Connect to GoogleApiClient to get current location when the app start
     protected void onStart() {
         super.onStart();
@@ -217,7 +218,7 @@ public class MainActivity extends AppCompatActivity
         protected void onReceiveResult(int resultCode, Bundle resultData) {
 
             if (resultCode == Constants.SUCCESS_RESULT) {
-                String mLastLocation = resultData.getString(Constants.RESULT_DATA_KEY);
+                mLastLocation = resultData.getString(Constants.RESULT_DATA_KEY);
 
                 // Save the fetched value to shared preferences
                 saveToSharedPref(String.valueOf(R.string.pref_last_location_key), mLastLocation);
@@ -292,13 +293,17 @@ public class MainActivity extends AppCompatActivity
         mAdapter.updateFragments(mWeatherData);
     }
 
+    // Get the results from the search View ========================================================
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
+        Log.i(TAG, "-------------------------onActivityResults-------------------------");
         if (requestCode == 1) {
             if(resultCode == Activity.RESULT_OK){
-                String result=data.getStringExtra("result");
-                requestWeatherInfo(result);
+                // Update the Location then android os is going to call onStart()
+                // update the UI from there.
+                mLastLocation = data.getStringExtra("result");
+                saveToSharedPref((String.valueOf(R.string.pref_last_location_key)),mLastLocation);
             }
             if (resultCode == Activity.RESULT_CANCELED) {
                 Log.i(TAG, "ACTIVITY_RESULT_CANCEL!");
