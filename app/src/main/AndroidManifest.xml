@@ -25,10 +25,10 @@
         </activity>
 
         <!-- This is the activity where the search is going to happen -->
+        <!--Use this in activity tag is you want to launch the search from mainActivity-->
+        <!--android:parentActivityName=".activity.MainActivity"-->
         <activity
             android:name=".activity.SearchableActivity"
-            android:label="@string/title_activity_settings"
-            android:parentActivityName=".activity.MainActivity"
             android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />

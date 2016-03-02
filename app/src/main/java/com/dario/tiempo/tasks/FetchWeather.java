@@ -1,11 +1,13 @@
 package com.dario.tiempo.tasks;
 
-import android.content.SharedPreferences;
+import android.app.Activity;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
+import android.support.annotation.StringDef;
 import android.util.Log;
 
+import com.dario.tiempo.interfaces.FetchWeatherInterface;
 import com.dario.tiempo.models.Forecast;
 import com.dario.tiempo.models.NextDaysForecast;
 import com.dario.tiempo.activity.MainActivity;
@@ -40,38 +42,92 @@ public class FetchWeather extends AsyncTask< String, Void, HashMap<Integer, Obje
     private static String TAG = "==> " + FetchWeather.class.getSimpleName();
     private static String KEY = "3afea7f9ad83cfd1c1e352f5977f7af7";
 
-    public static final String TODAY = "today";
-    public static final String NEXTDAYS = "nextDays";
-
-    private MainActivity mActivity;
+    private FetchWeatherInterface mActivity;
     private String mDefaultUnits;
-    private String mLocation;
+    private String mOptions;
+    String mLocation;
 
-    public FetchWeather (MainActivity activity){
+    public FetchWeather (FetchWeatherInterface activity){
         mActivity = activity;
     }
 
+
+    // When calling this task use task.execute(location, units, options);
     @Override
     protected HashMap<Integer, Object> doInBackground(String... params) {
 
-        if (params.length != 2){
+        if (params.length != 3){
             return null;
         }
 
-        String mLocation = params[0];
+        mLocation = params[0];
         mDefaultUnits= params[1];
+        mOptions = params[2];
+
         Log.d(TAG, "UNITS:: " + mDefaultUnits);
-        //
+
+        // Object to return. it can be null if no city found
+        HashMap<Integer, Object> result = new HashMap<>();
+        if(mOptions.equals(String.valueOf(R.string.fetch_weather))){
+            result = fetchWeather();
+        } else if (mOptions.equals(String.valueOf(R.string.fetch_city))){
+            result = fetchCity();
+        }
+        return result;
+    }
+
+    private HashMap<Integer, Object> fetchCity(){
+        String urlStrToday = buildTodayForecastURL(mLocation, mDefaultUnits);
+        HashMap<Integer, Object> result = new HashMap<>();
+        try {
+            // Create URL from String
+            URL urlToday = new URL(urlStrToday);
+
+            // Fetch Data
+            // Get a list of cities
+            String todayForecast = getWeatherData(urlToday);
+            Log.i(TAG, "FETCH CITY: " + todayForecast);
+
+            // No city found
+            if(todayForecast == null){
+                return null;
+            }
+
+            //Parse to a WeatherObject to make easy for the ui to render
+            List<Forecast> listOfCities  = JsonToListOfCities(todayForecast);
+
+            // Put the result of the query in a HashMap
+            result.put(R.string.list_cities, listOfCities);
+
+        } catch (Exception e) {
+            Log.e(TAG, "URL", e);
+        }
+        return result;
+
+    }
+    private HashMap<Integer, Object> fetchWeather(){
+        // Build the URLs to request
         String urlStrNextDays = buildNextDaysForecastURL(mLocation, mDefaultUnits);
         String urlStrToday = buildTodayForecastURL(mLocation, mDefaultUnits);
 
         HashMap<Integer, Object> result = new HashMap<>();
         try {
+            // Create URL from String
             URL urlToday = new URL(urlStrToday);
             URL urlNextDays = new URL(urlStrNextDays);
 
+            // Fetch Data
+            // Two cases:
+            // 1. you get a list of cities
+            // 2. you get one city
             String todayForecast = getWeatherData(urlToday);
             String nextDaysForecast = getWeatherData(urlNextDays);
+            Log.i(TAG, "FETCH WEATHER: " + todayForecast);
+
+            // No city found
+            if(todayForecast == null || nextDaysForecast == null){
+                return null;
+            }
 
             //Parse to a WeatherObject to make easy for the ui to render
             List<Forecast> nextDays  = JsonToForecastNextDays(nextDaysForecast);
@@ -83,9 +139,6 @@ public class FetchWeather extends AsyncTask< String, Void, HashMap<Integer, Obje
         } catch (Exception e) {
             Log.e(TAG, "URL", e);
         }
-
-        //Change return type to hash map
-        //return result;
         return result;
     }
 
@@ -102,9 +155,12 @@ public class FetchWeather extends AsyncTask< String, Void, HashMap<Integer, Obje
             Log.d(TAG, "Weather data not found!");
             return;
         }
-        mActivity.onWeatherFetch(data);
+        mActivity.updateWeather(data);
     }
 
+
+    // Fetch Data from API
+    @Nullable
     private String getWeatherData(URL url) {
 
         HttpURLConnection urlConnection = null;
@@ -138,6 +194,7 @@ public class FetchWeather extends AsyncTask< String, Void, HashMap<Integer, Obje
             }
 
             forecastJson = buffer.toString();
+            Log.i(TAG, forecastJson);
 
         }catch (Exception e){
             Log.e(TAG, "Error when getting data from OpenWeatherMap", e);
@@ -157,6 +214,7 @@ public class FetchWeather extends AsyncTask< String, Void, HashMap<Integer, Obje
         return forecastJson;
     }
 
+    // Build URL that will be used to get data for today weather from api
     private String buildTodayForecastURL(String location, String units){
         Uri.Builder builder = new Uri.Builder();
         String url = builder.scheme("http")
@@ -172,6 +230,7 @@ public class FetchWeather extends AsyncTask< String, Void, HashMap<Integer, Obje
         return url;
     }
 
+    // Build URL that will be used to get forecast data from api
     private String buildNextDaysForecastURL(String location, String units){
         Uri.Builder builder = new Uri.Builder();
         String url = builder.scheme("http")
@@ -186,10 +245,10 @@ public class FetchWeather extends AsyncTask< String, Void, HashMap<Integer, Obje
                 .appendQueryParameter("appid", KEY).build().toString();
 
         Log.i(TAG, url);
-
         return url;
     }
 
+    // Parser form json to Forecast Object
     private Forecast JsonToTodayForecast(String JsonStr) throws JSONException {
 
         JSONObject obj = new JSONObject(JsonStr);
@@ -230,6 +289,54 @@ public class FetchWeather extends AsyncTask< String, Void, HashMap<Integer, Obje
         return todayForecast;
     }
 
+    // This function is used in the search function
+    private List<Forecast> JsonToListOfCities(String JsonStr)throws JSONException{
+        JSONObject obj = new JSONObject(JsonStr);
+        JSONArray list = obj.getJSONArray("list");
+
+        List<Forecast> forecastList = new ArrayList<>();
+        for (int i = 0; i <list.length(); i++ ){
+
+            JSONObject item = list.getJSONObject(i);
+            //Log.d(TAG, item.toString());
+
+            String location = item.getString("name")
+                    + ", "
+                    + item.getJSONObject("sys").getString("country");
+
+            JSONObject main = item.getJSONObject("main");
+            //Log.d(TAG,main.toString());
+
+            Date readAt = new Date();
+            Double temp = main.getDouble("temp");
+            Double min = main.getDouble("temp_min");
+            Double max = main.getDouble("temp_max");
+            Double humidity = main.getDouble("humidity");
+            Double pressure = main.getDouble("pressure");
+            //{"temp":-12.54,"pressure":1017,"humidity":78,"temp_min":-13,"temp_max":-12}
+
+            Double windSpeed = item.getJSONObject("wind").getDouble("speed");
+            //Log.d(TAG,"Wind: " + windSpeed.toString());
+
+            Double clouds = item.getJSONObject("clouds").getDouble("all");
+            //Log.d(TAG, "Clouds: " + clouds.toString());
+
+            JSONObject weather = item.getJSONArray("weather").getJSONObject(0);
+            //Log.d(TAG, "Description: " + weather.toString());
+            String description = weather.getString("description");
+            String icon = weather.getString("icon");
+
+            TodayForecast todayForecast = new TodayForecast(min, max, pressure, windSpeed, humidity,
+                    clouds, description, icon, location, temp, readAt);
+
+            todayForecast.setUnits(mDefaultUnits);
+
+            forecastList.add(todayForecast);
+        }
+        return forecastList;
+    }
+
+    // Parser form json to list<Forecast> Objects
     private List<Forecast> JsonToForecastNextDays(String JsonStr) throws JSONException {
 
         JSONObject obj = new JSONObject(JsonStr);

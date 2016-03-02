@@ -2,6 +2,7 @@ package com.dario.tiempo.activity;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.SearchManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -23,11 +24,13 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import com.dario.tiempo.Constants;
 import com.dario.tiempo.R;
 import com.dario.tiempo.adapters.ViewPagerAdapter;
+import com.dario.tiempo.interfaces.FetchWeatherInterface;
 import com.dario.tiempo.services.FetchAddressIntentService;
 import com.dario.tiempo.tabs.SlidingTabLayout;
 import com.dario.tiempo.tasks.FetchWeather;
@@ -39,12 +42,13 @@ import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity
         implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener {
+        GoogleApiClient.OnConnectionFailedListener,
+        FetchWeatherInterface {
 
     private static final String TAG = "==> " + MainActivity.class.getSimpleName();
     private static final String CITY = "CITY";
 
-    private Toolbar mToolbar;
+    private static final int SEARCH_INTENT_CODE = 1;
 
     private ViewPager mPager;
     private ViewPagerAdapter mAdapter;
@@ -56,9 +60,6 @@ public class MainActivity extends AppCompatActivity
     private Location mLastLocation;
     private AddressResultReceiver mResultReceiver;
 
-    //private String mCurrentCity;
-
-    private HashMap<Integer, Object> mWeatherData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,8 +68,8 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         //Toolbar
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(mToolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         // Creating The ViewPagerAdapter and Passing Fragment Manager, Titles for the Tabs and Number Of Tabs.
         mTitles = new CharSequence[2];
@@ -159,16 +160,30 @@ public class MainActivity extends AppCompatActivity
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
 
-        SearchManager searchManager = (SearchManager)
+        /*SearchManager searchManager = (SearchManager)
                 getSystemService(Context.SEARCH_SERVICE);
 
         // Associate searchable configuration with the SearchView
-        MenuItem searchItem = menu.findItem(R.id.action_search);
-        SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
+        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+
+        *//*searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                Log.i("----------SUBMIT", query +"----------");
+                requestWeatherInfo(query);
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                Log.i("----------TEXT", newText +"----------");
+                return true;
+            }
+        });*//*
 
         ComponentName componentName = new ComponentName(this, SearchableActivity.class);
         searchView.setSearchableInfo(
-                searchManager.getSearchableInfo(componentName));
+                searchManager.getSearchableInfo(componentName));*/
 
         return true;
     }
@@ -187,6 +202,12 @@ public class MainActivity extends AppCompatActivity
         switch (item.getItemId()){
             case R.id.action_settings:
                 startActivity(new Intent(this, SettingsActivity.class));
+                return true;
+            case R.id.action_search:
+                Log.i(TAG, "SEARCH PRESSED!");
+                //Start a new Activity
+                Intent searchIntent = new Intent(this, SearchableActivity.class);
+                startActivityForResult(searchIntent,SEARCH_INTENT_CODE);
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -293,9 +314,6 @@ public class MainActivity extends AppCompatActivity
                 Toast.LENGTH_LONG).show();
     }
 
-    //TODO:
-    //Pass CurrentCity as parameter
-    //If no position found use default position
     private void requestWeatherInfo(String location){
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -311,11 +329,28 @@ public class MainActivity extends AppCompatActivity
         }
 
         FetchWeather fetchWeather = new FetchWeather(this);
-        fetchWeather.execute(location, DefaultUnits);
+        fetchWeather.execute(location, DefaultUnits, String.valueOf(R.string.fetch_weather));
     }
     // Callback method used to update the UI interface after the data information have been fetched
-    public void onWeatherFetch(HashMap<Integer, Object> weatherData){
+    @Override
+    public void updateWeather(HashMap<Integer, Object> weatherData){
+        HashMap<Integer, Object> mWeatherData;
         mWeatherData = weatherData;
         mAdapter.updateFragments(mWeatherData);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (requestCode == 1) {
+            if(resultCode == Activity.RESULT_OK){
+                String result=data.getStringExtra("result");
+                requestWeatherInfo(result);
+            }
+            if (resultCode == Activity.RESULT_CANCELED) {
+                //Write your code if there's no result
+                Log.i(TAG, "ACTIVITY_RESULT_CANCEL!");
+            }
+        }
     }
 }

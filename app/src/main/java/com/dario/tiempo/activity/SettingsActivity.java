@@ -11,6 +11,7 @@ import android.view.MenuItem;
 import com.dario.tiempo.R;
 
 public class SettingsActivity extends AppCompatActivity {
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

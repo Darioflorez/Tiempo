@@ -5,13 +5,20 @@
     <string name="search_title">Search</string>
     <string name="search_hint">Search location</string>
 
+    <!--Weather hashmap keys-->
+    <string name="today">today</string>
+    <string name="next_days">nextDays</string>
+    <string name="list_cities">listCities</string>
+
+    <!--Weather options-->
+    <string name="fetch_city">fetchCity</string>
+    <string name="fetch_weather">fetchWeather</string>
+
     <string name="service_not_available">Service not available</string>
     <string name="invalid_lat_long_used">Invalid latitude or longitude </string>
     <string name="no_address_found">No address found </string>
     <string name="address_found">Address found </string>
     <string name="no_geocoder_available">No geodecoder available </string>
-    <string name="today">today</string>
-    <string name="next_days">nextDays</string>
     <string name="tab_today">Today</string>
     <string name="tab_next_days">Next Days</string>
     <string name="title_activity_settings">Settings</string>
