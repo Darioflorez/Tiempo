@@ -3,9 +3,6 @@ package com.dario.tiempo.activity;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.SearchManager;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -16,15 +13,12 @@ import android.os.Handler;
 import android.os.ResultReceiver;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Toast;
 
 import com.dario.tiempo.Constants;
@@ -46,7 +40,7 @@ public class MainActivity extends AppCompatActivity
         FetchWeatherInterface {
 
     private static final String TAG = "==> " + MainActivity.class.getSimpleName();
-    private static final String CITY = "CITY";
+    private static final String LOCATION = "location";
 
     private static final int SEARCH_INTENT_CODE = 1;
 
@@ -57,13 +51,13 @@ public class MainActivity extends AppCompatActivity
     private int mNumbOfTabs = 2;
 
     private GoogleApiClient mGoogleApiClient;
-    private Location mLastLocation;
+    private String mLastLocation;
     private AddressResultReceiver mResultReceiver;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG, "OnCreate");
+        Log.d(TAG, "---------------------onCreate---------------------");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -89,158 +83,82 @@ public class MainActivity extends AppCompatActivity
         // Setting the ViewPager For the SlidingTabsLayout
         mTabs.setViewPager(mPager);
 
+        // Google client is used to fetch current location
         buildGoogleApiClient();
-
-        //Create a receiver for the intent
-        mResultReceiver = new AddressResultReceiver(new Handler());
     }
 
-    //Methods from Activity/////////
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if(mLastLocation == null){
-            connectToGoogleApiClient();
+    protected void buildGoogleApiClient() {
+        // Create an instance of GoogleAPIClient.
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
         }
     }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        disconnectGoogleApiClient();
+    //Connect to GoogleApiClient to get current location when the app start
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG, "---------------------onStart---------------------");
+        mLastLocation = getSharedPref(String.valueOf(R.string.pref_last_location_key));
+        Log.i(TAG, "LAST LOCATION: " + mLastLocation);
+        if(mLastLocation.equals("")){
+            connectToGoogleApiClient();
+        }
+        else{
+            requestWeatherInfo(mLastLocation);
+        }
     }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        //Save the data you want to preserve when the screen is rotated
-        //outState.putString(CITY, mCurrentCity);
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        //mCurrentCity = savedInstanceState.getString(CITY);
-
-        //Populate the UI
-    }
-    //Handle Location/////////
-    @Override
-    public void onConnected(Bundle bundle) {
-        Log.d(TAG, "Google api client CONNECTED!");
-        //Start a service to get the current location
-        fetchLocation();
-    }
-    @Override
-    public void onConnectionSuspended(int i) {
-        Log.i(TAG, "Google Api client CONNECTION SUSPEND! " + i);
-    }
-    //Handle connection fails
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        //The gps is not activate
-        Log.d(TAG, "CONNECTION FAILED!");
-    }
-    /////////////////////
-
     private void connectToGoogleApiClient(){
         if (mGoogleApiClient != null) {
             mGoogleApiClient.connect();
         }
     }
+
+    //Disconnect from GoogleApiClient when the app is stopped
+    @Override
+    protected void onStop() {
+        super.onStop();
+        disconnectGoogleApiClient();
+    }
     private void disconnectGoogleApiClient(){
         if (mGoogleApiClient.isConnected()) {
-            Log.d(TAG, "DISCONNECT GOOGLE API CLIENT!");
+            Log.d(TAG, "GOOGLE API CLIENT DISCONNECT !");
             mGoogleApiClient.disconnect();
         }
     }
-    //Handle toolbar
+
+    //Handle GoogleApiClient connection fails
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-
-        /*SearchManager searchManager = (SearchManager)
-                getSystemService(Context.SEARCH_SERVICE);
-
-        // Associate searchable configuration with the SearchView
-        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
-
-        *//*searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                Log.i("----------SUBMIT", query +"----------");
-                requestWeatherInfo(query);
-                return true;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                Log.i("----------TEXT", newText +"----------");
-                return true;
-            }
-        });*//*
-
-        ComponentName componentName = new ComponentName(this, SearchableActivity.class);
-        searchView.setSearchableInfo(
-                searchManager.getSearchableInfo(componentName));*/
-
-        return true;
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        //The gps is not activate
+        Log.d(TAG, "CONNECTION FAILED!");
     }
+
+    // Handle GoogleApiClient suspend
     @Override
-    public boolean onSearchRequested() {
-        Log.d(TAG, "onSearchRequested!");
-        setContentView(R.layout.search);
-        return super.onSearchRequested();
+    public void onConnectionSuspended(int i) {
+        Log.i(TAG, "Google Api client CONNECTION SUSPEND! " + i);
     }
+
+    //Handle GoogleApiClient connected
+    // Start Fetch Location ========================================================================
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
+    public void onConnected(Bundle bundle) {
+        Log.d(TAG, "GOOGLE API CLIENT CONNECTED!");
+        //Start a service to get the current location
+        Location location = fetchLocation();
 
-        switch (item.getItemId()){
-            case R.id.action_settings:
-                startActivity(new Intent(this, SettingsActivity.class));
-                return true;
-            case R.id.action_search:
-                Log.i(TAG, "SEARCH PRESSED!");
-                //Start a new Activity
-                Intent searchIntent = new Intent(this, SearchableActivity.class);
-                startActivityForResult(searchIntent,SEARCH_INTENT_CODE);
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-    //Location ///////////////////////////////////////////////////////////////
-    private void fetchLocation() {
-        //Get location
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-
-            Log.d(TAG, "NO PERMISSIONS");
-            return;
-        }
-        Log.d(TAG, "FETCH LOCATION!");
-        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
-                mGoogleApiClient);
-
-        if (mLastLocation != null) {
-
-            Log.d(TAG, "LATITUDE: " + mLastLocation.getLatitude());
-            Log.d(TAG, "LONGITUDE: " + mLastLocation.getLongitude());
-
+        if (location != null) {
+            /*Log.d(TAG, "LATITUDE: " + location.getLatitude());
+            Log.d(TAG, "LONGITUDE: " + location.getLongitude());*/
             // Determine whether a Geocoder is available.
             if (Geocoder.isPresent()) {
-                Log.d(TAG, "GEOCODER is present!");
-                startFetchAddressIntentService();
-
+                // Try o get a city from latitude and longitude
+                //Create a receiver for the intent and start to fetch the current location
+                AddressResultReceiver receiver = new AddressResultReceiver(new Handler());
+                startFetchAddressIntentService(receiver, location);
             }else{
                 showToast(getString(R.string.no_geocoder_available));
             }
@@ -250,23 +168,39 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    //Start the fetch address service
-    protected void startFetchAddressIntentService() {
+    //Fetch Current Location =======================================================================
+    private Location fetchLocation() {
+        //Get location
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            Log.d(TAG, "NO PERMISSIONS");
+            return null ;
+        }
+        Log.d(TAG, "FETCH LOCATION!");
+        // You get latitude and longitude from GoogleApiClient
+        return LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+    }
+
+    //Start fetch address service. This service return a city name from its coordinates
+    protected void startFetchAddressIntentService(AddressResultReceiver receiver, Location location ) {
         //Create an intent
         Intent intent = new Intent(this, FetchAddressIntentService.class);
         //Set the receiver for the intent
-        intent.putExtra(Constants.RECEIVER, mResultReceiver);
+        intent.putExtra(Constants.RECEIVER, receiver);
         //Set the data for the intent to process
-        intent.putExtra(Constants.LOCATION_DATA_EXTRA, mLastLocation);
+        intent.putExtra(Constants.LOCATION_DATA_EXTRA, location);
         //Start the service that will fetch the current address
         startService(intent);
         Log.d(TAG, "SERVICE STARTED!");
     }
 
-    /**
-     * This class is used to get and process
-     * the result delivered for the intent/service FetchAddressIntentService
-     */
+    // Get and process the result delivered for the intent/service FetchAddressIntentService =======
     @SuppressLint("ParcelCreator")
     class AddressResultReceiver extends ResultReceiver {
 
@@ -282,31 +216,47 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected void onReceiveResult(int resultCode, Bundle resultData) {
 
-            // Show a toast message if an address was found.
             if (resultCode == Constants.SUCCESS_RESULT) {
-                String location = resultData.getString(Constants.RESULT_DATA_KEY);
-                Log.d(TAG, "RESULT: " + location);
-                requestWeatherInfo(location);
-                //disconnectGoogleApiClient();
+                String mLastLocation = resultData.getString(Constants.RESULT_DATA_KEY);
+
+                // Save the fetched value to shared preferences
+                saveToSharedPref(String.valueOf(R.string.pref_last_location_key), mLastLocation);
+                Log.d(TAG, "RESULT: " + mLastLocation);
+                requestWeatherInfo(mLastLocation);
+                // Disconnect GoogleApiClient you have gotten the current location
+                disconnectGoogleApiClient();
             } else {
-                //TODO:
-                // default have to be in a string resource
                 Log.d(TAG, "RESULT: " + "ADDRESS NO FOUND");
                 requestWeatherInfo(getString(R.string.no_location_found));
             }
-
         }
     }
 
-    protected void buildGoogleApiClient() {
-        // Create an instance of GoogleAPIClient.
-        if (mGoogleApiClient == null) {
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .addApi(LocationServices.API)
-                    .build();
+    //Handle toolbar
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+
+        switch (item.getItemId()){
+            case R.id.action_settings:
+                startActivity(new Intent(this, SettingsActivity.class));
+                return true;
+            case R.id.action_search:
+                //Start a new Activity
+                Intent searchIntent = new Intent(this, SearchableActivity.class);
+                startActivityForResult(searchIntent,SEARCH_INTENT_CODE);
+                return true;
         }
+        return super.onOptionsItemSelected(item);
     }
 
     public void showToast(String msg){
@@ -317,20 +267,23 @@ public class MainActivity extends AppCompatActivity
     private void requestWeatherInfo(String location){
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        // Get Default units
         String DefaultUnits = prefs.getString(
                 getString(R.string.pref_temp_units_key),
                 getString(R.string.pref_temp_units_default));
+
         if(location.equals(getString(R.string.no_location_found))){
+            // Get default location
             location = prefs.getString(
                     getString(R.string.pref_location_key),
                     getString(R.string.pref_location_default));
-
-            Log.d(TAG, "LOCATION:: " + getString(R.string.pref_location_key));
         }
 
+        // Create a AsyncTack to fetch the weather data
         FetchWeather fetchWeather = new FetchWeather(this);
         fetchWeather.execute(location, DefaultUnits, String.valueOf(R.string.fetch_weather));
     }
+
     // Callback method used to update the UI interface after the data information have been fetched
     @Override
     public void updateWeather(HashMap<Integer, Object> weatherData){
@@ -348,9 +301,58 @@ public class MainActivity extends AppCompatActivity
                 requestWeatherInfo(result);
             }
             if (resultCode == Activity.RESULT_CANCELED) {
-                //Write your code if there's no result
                 Log.i(TAG, "ACTIVITY_RESULT_CANCEL!");
             }
         }
+    }
+
+    // Life cycle methods ==========================================================================
+    @Override
+    protected void onPause() {
+        super.onPause();
+        saveToSharedPref((String.valueOf(R.string.pref_last_location_key)),mLastLocation);
+        Log.i(TAG, "-------------------------onPause-------------------------");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        saveToSharedPref((String.valueOf(R.string.pref_last_location_key)),"");
+        Log.i(TAG, "-------------------------onDestroy-------------------------");
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        //Save the data you want to preserve when the screen is rotated
+        outState.putString(LOCATION, mLastLocation);
+        Log.i(TAG, "-------------------OnSaveInstance-------------------");
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        mLastLocation = savedInstanceState.getString(LOCATION);
+        Log.i(TAG, "-------------------OnRestoreInstance-------------------");
+    }
+
+    private void saveToSharedPref(String key, String value){
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor ed = pref.edit();
+        ed.putString(key, value);
+        ed.apply();
+    }
+
+    private String getSharedPref(String key){
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        // Get Default units
+        return prefs.getString(key,"");
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        // Get the intent
+        setIntent(intent);
+        Log.i(TAG, "-------------------OnNewIntent-------------------");
     }
 }

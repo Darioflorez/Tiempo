@@ -112,13 +112,9 @@ public class SearchableActivity extends AppCompatActivity implements FetchWeathe
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
+        // automatically handle clicks on the Home/Up button
         switch (item.getItemId()) {
             // Respond to the action bar's Up/Home button
-            /*case R.id.action_settings:
-                startActivity(new Intent(this, SettingsActivity.class));
-                return true;*/
             case android.R.id.home:
                 Intent returnIntent = new Intent();
                 setResult(Activity.RESULT_CANCELED, returnIntent);
@@ -142,7 +138,7 @@ public class SearchableActivity extends AppCompatActivity implements FetchWeathe
     // Callback method used to update the UI interface after the data information have been fetched
     @Override
     public void updateWeather(HashMap<Integer, Object> weatherData){
-        // Update a fragment to present the data
+        // Update the list adapter
         final List<TodayForecast> listOfCities = (List<TodayForecast> )weatherData.get(R.string.list_cities);
         Log.i(TAG, "NUMBER OF CITIES: " + String.valueOf(listOfCities.size()));
 

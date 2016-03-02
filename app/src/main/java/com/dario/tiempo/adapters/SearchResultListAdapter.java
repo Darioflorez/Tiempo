@@ -9,7 +9,6 @@ import android.widget.TextView;
 
 import com.dario.tiempo.R;
 import com.dario.tiempo.helper.formater;
-import com.dario.tiempo.models.NextDaysForecast;
 import com.dario.tiempo.models.TodayForecast;
 
 import java.util.List;

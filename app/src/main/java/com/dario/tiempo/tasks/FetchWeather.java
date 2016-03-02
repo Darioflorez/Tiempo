@@ -149,7 +149,6 @@ public class FetchWeather extends AsyncTask< String, Void, HashMap<Integer, Obje
 
     @Override
     protected void onPostExecute(HashMap<Integer, Object> data) {
-        //Log.i(TAG, "Description day last: " + nextDays.get(nextDays.size()-1).getDescription());
         //Set the weather data into a hash in the main activity
         if(data == null){
             Log.d(TAG, "Weather data not found!");
